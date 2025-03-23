@@ -67,6 +67,8 @@ def compute_hessian_single_layer_single_block(model_name, cache_dir, seed, t=768
 
         print("dt =", time.perf_counter() - t1)
 
+        #torch.save(hess * num_batches / (k+1), "data/diff_bs/b_" + str(k+1) + ".pt")
+
     torch.save(hess, "data/hessian_q_proj.pt")
 
     return hess
@@ -83,14 +85,14 @@ if __name__ == '__main__':
 
     start_t = time.perf_counter()
     hess = compute_hessian_single_layer_single_block(model_name=args.model, cache_dir=args.cache_dir, seed=args.seed,
-                                                     t=100, model_input_bs=4, b=140)
+                                                     t=50, model_input_bs=4, b=60)
     print("Computation time =", time.perf_counter() - start_t)
 
     print(torch.diag(hess))
 
     #plot_heatmap(torch.diag(hess).reshape(1, -1))
-    #plot_hist(torch.diag(hess))
+    plot_hist(torch.diag(hess))
 
     # Computation time = 29338.510749154957 sec
 
-    plot_heatmap(torch.abs(hess))
+    #plot_heatmap(torch.abs(hess))

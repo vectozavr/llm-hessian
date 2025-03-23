@@ -8,7 +8,7 @@ from utils import set_seed, get_llm, ppl_function, check_gpus, plot_heatmap, plo
 from data import get_cached_wikitext2
 
 
-def compute_hessian_diag_hutchinson(model_name, cache_dir, seed, block_number=0, model_input_bs=4, b=32, vhp_samples=100):
+def compute_hessian_diag_hutchinson(model_name, cache_dir, seed, block_number=0, model_input_bs=4, b=60, vhp_samples=100):
     set_seed(seed)
 
     model, tokenizer = get_llm(model_name, cache_dir)
@@ -103,7 +103,7 @@ if __name__ == '__main__':
 
     check_gpus()
 
-    vhp_samples_list = [10, 100, 1000, 3000, 5000, 10000, 30000, 50000, 100000]
+    vhp_samples_list = [1, 10, 100, 1000, 3000, 5000, 10000, 30000, 50000, 100000]
 
     for vhp_samples in vhp_samples_list:
         print("vhp_samples =", vhp_samples)
