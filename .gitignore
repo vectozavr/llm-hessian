@@ -3,4 +3,5 @@
 heatmap_hessian.pdf
 histogram.pdf
 .idea/
+__pycache__
 

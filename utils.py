@@ -9,6 +9,13 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 
+def draw_progress_bar(current, total, bar_length=30, prefix="Progress"):
+    percent = 100 * current / total
+    filled_length = int(bar_length * current // total)
+    bar = '█' * filled_length + '-' * (bar_length - filled_length)
+    print(f"\r{prefix}: |{bar}| {percent:.2f}%", end='', flush=True)
+
+
 def check_gpus():
     print("CUDA Available:", torch.cuda.is_available())
     for i in range(torch.cuda.device_count()):
