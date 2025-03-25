@@ -54,6 +54,7 @@ def get_llm(model_name, cache_dir="llm_weights"):
 
 
 # Function to evaluate perplexity (ppl) specifically on the wikitext dataset
+# Give the average PPL score on a batch of size batch_size
 def ppl_function(model, testloader, i_start=0, batch_size=4, device=None, debug=True):
     # Get input IDs
     testenc = testloader.input_ids

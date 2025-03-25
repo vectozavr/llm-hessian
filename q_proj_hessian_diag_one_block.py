@@ -65,7 +65,7 @@ def prepare_calibration_input(model, dataloader, device, b):
     return inps, attention_mask, position_ids, position_embeddings
 
 
-def compute_hessian_diag_hutchinson(model_name, cache_dir, seed, block_number=0, b=30, model_input_bs=10, vhp_samples=100):
+def compute_hessian_diag_hutchinson(model_name, cache_dir, seed, block_number=0, b=60, model_input_bs=10, vhp_samples=100):
     set_seed(seed)
 
     model, tokenizer = get_llm(model_name, cache_dir)
@@ -140,7 +140,12 @@ def compute_hessian_diag_hutchinson(model_name, cache_dir, seed, block_number=0,
             block.self_attn.q_proj.forward = custom_q_proj_forward.__get__(self_attn.q_proj, type(self_attn.q_proj))
 
             _block_out = block(inps[i_start:i_start+model_input_bs], **block_args)[0]
-            _loss_val = torch.sum(torch.norm(_block_out - outs[i_start:i_start+model_input_bs], dim=(1, 2))) / b
+            _real_out = outs[i_start:i_start+model_input_bs]
+
+            # For some reason this one gives nans in torch.autograd.functional.vhp
+            #_loss_val = torch.sum(torch.norm(_block_out - _real_out, dim=(1, 2))) / b
+            # So, instead we use this one:
+            _loss_val = torch.sum((_block_out - _real_out)**2) / b
 
             return _loss_val
 
@@ -164,7 +169,7 @@ def compute_hessian_diag_hutchinson(model_name, cache_dir, seed, block_number=0,
             draw_progress_bar(i + 1, vhp_samples)
 
         hess_diag = hess_diag.to(device=diag_estimate.device)
-        hess_diag += diag_estimate / (vhp_samples)
+        hess_diag += diag_estimate / vhp_samples
 
         # print("dt =", time.perf_counter() - t1)
         print("Processed " + str((k + 1) * model_input_bs) + " samples...")
@@ -190,5 +195,3 @@ if __name__ == '__main__':
     print("dt =", time.perf_counter() - start_time)
 
     torch.save(hess_diag_res, "data/diag_hessian/hessian_diag_q_proj_vhp_samples_5000_block_loss.pt")
-
-    # plot_heatmap(torch.abs(hess_diag)[0][:25].reshape(1, -1))

@@ -17,7 +17,7 @@ def compute_hessian_single_layer_single_block(model_name, cache_dir, seed, t=768
     device = torch.device("cuda:0")
 
     # Get the test loader
-    testloader = get_cached_wikitext2(tokenizer, model.seqlen, seed=seed)
+    _, testloader = get_cached_wikitext2(tokenizer, model.seqlen, seed=seed)
 
     # Access the first transformer layer and q_proj weight matrix
     layer = model.model.decoder.layers[block_number]
