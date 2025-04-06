@@ -103,13 +103,11 @@ def compute_hessian_several_layers_several_blocks(model_name, cache_dir, seed, n
 
     hess = torch.zeros((t * num_layers * num_blocks, t * num_layers * num_blocks))
 
-    # NOTICE: here we rely on the additive property of the PPL function (Corollary in a technical report)
+    # NOTICE: here we rely on the additive property of the PPL function (Corollary 7.2 in a technical report)
     for k in range(num_batches):
         dH = hessian(get_partial_ppl_fn(i_start=k * model_input_bs), params)
         hess = hess.to(device=dH.device)
         hess += dH / num_batches
-
-    torch.save(hess, "data/diff_bs/hessian_all_layers_all_blocks.pt")
 
     return hess
 
@@ -133,5 +131,5 @@ if __name__ == '__main__':
     # Computation time = 90927.86469955707 (all layers, all blocks, t=25)
     # Computation time = 71593.03141659603 (all layers, 1 block, t=300)
 
-
     plot_heatmap(hess)
+    torch.save(hess, "data/diff_bs/hessian_all_layers_all_blocks.pt")

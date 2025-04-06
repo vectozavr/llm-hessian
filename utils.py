@@ -54,6 +54,7 @@ def get_llm(model_name, cache_dir="llm_weights"):
 
 
 # Function to evaluate perplexity (ppl) specifically on the wikitext dataset
+# Give the average PPL score on a batch of size batch_size
 def ppl_function(model, testloader, i_start=0, batch_size=4, device=None, debug=True):
     # Get input IDs
     testenc = testloader.input_ids
@@ -83,11 +84,33 @@ def ppl_function(model, testloader, i_start=0, batch_size=4, device=None, debug=
     # Calculate negative log likelihood
     neg_log_likelihood = loss.float()
 
+    # IMPORTANT: I skip this step to make this function having additive properties (Corollary 7.2. in a technical report)
     # Compute perplexity
-    # IMPORTANT: here I changed the function to make it having additive properties (Corollary 5.2. in a technical report)
     # ppl = torch.exp(neg_log_likelihood / (nsamples * model.seqlen))
 
     return neg_log_likelihood
+
+
+def model_output_function(model, testloader, i_start=0, batch_size=4, device=None, debug=True):
+    # Get input IDs
+    testenc = testloader.input_ids
+    samples_in_dataset = testenc.numel() // model.seqlen
+
+    if debug:
+        print(f"batch_size = {batch_size}")
+
+    # Calculate end index
+    j = min(i_start+batch_size, i_start+samples_in_dataset)
+
+    # Prepare inputs and move to device
+    inputs = testenc[:, (i_start * model.seqlen):(j * model.seqlen)].to(device)
+    inputs = inputs.reshape(j-i_start, model.seqlen)
+
+    # Forward pass through the model
+    lm_logits = model(inputs).logits
+
+    return lm_logits
+
 
 
 def plot_heatmap(tensor, out_path="heatmap_hessian.pdf"):

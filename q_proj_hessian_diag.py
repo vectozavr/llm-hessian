@@ -4,7 +4,7 @@ import time
 import torch
 import torch.nn.functional as F
 
-from utils import set_seed, get_llm, ppl_function, check_gpus, plot_heatmap, plot_hist
+from utils import set_seed, get_llm, ppl_function, check_gpus, plot_heatmap, plot_hist, model_output_function
 from data import get_cached_wikitext2
 
 
@@ -63,18 +63,14 @@ def compute_hessian_diag_hutchinson(model_name, cache_dir, seed, block_number=0,
             # Monkey-patch q_proj's forward method
             self_attn.q_proj.forward = custom_q_proj_forward.__get__(self_attn.q_proj, type(self_attn.q_proj))
 
-            return ppl_function(model, testloader, i_start=i_start, device=device, batch_size=model_input_bs,
-                                debug=False)
+            return ppl_function(model, testloader, i_start=i_start, device=device, batch_size=model_input_bs, debug=False)
 
         return partial_ppl_fn
 
-
-    # NOTICE: here we rely on the additive property of the PPL function (Corollary in a technical report)
-    '''
+    # NOTICE: here we rely on the additive property of the PPL function (Corollary 7.2 in a technical report)
     hess_diag = torch.zeros_like(params, device=params.device)
 
     for k in range(num_batches):
-        #t1 = time.perf_counter()
         ppl_fn = get_partial_ppl_fn(i_start=k * model_input_bs)
 
         diag_estimate = torch.zeros_like(params)
@@ -90,21 +86,20 @@ def compute_hessian_diag_hutchinson(model_name, cache_dir, seed, block_number=0,
 
         hess_diag += diag_estimate / (vhp_samples * num_batches)
 
-        #print("dt =", time.perf_counter() - t1)
         print("Processed " + str((k+1)*model_input_bs) + " samples...")
-        
-    '''
 
     # NOTICE: This code is written for one single experiment in order to understand how errors evolve over time
+    '''
     print("Started")
     start_time = time.perf_counter()
 
-    real_diag_first_50 = torch.diag(torch.load("data/hessian_q_proj_for_diag_exp.pt"))
+    real_diag_first_row = torch.diag(torch.load("data/hessian_q_proj_b60_t768.pt"))
+
     diag_estimate = torch.zeros_like(params)
 
-    diffs = []
-    errors = []
-    times = []
+    diffs = [torch.tensor([1.0])]
+    errors = [torch.tensor([1.0])]
+    times = [0]
     for i in range(vhp_samples):
         v = hadamard_vector(size=params.numel(), block_size=32).reshape(params.shape)
         v = v.to(device=params.device)
@@ -114,24 +109,26 @@ def compute_hessian_diag_hutchinson(model_name, cache_dir, seed, block_number=0,
         for k in range(num_batches):
             ppl_fn = get_partial_ppl_fn(i_start=k * model_input_bs)
             _, Hv = torch.autograd.functional.vhp(ppl_fn, (params,), (v,))
-            diag_estimate += (Hv[0] * v) / num_batches
+            diag_estimate += Hv[0] * v / num_batches
 
-        if i == 0:
-            continue
-
-        diffs.append(torch.linalg.norm(prev_diag_estimate/i - diag_estimate/(i+1)) / torch.linalg.norm(diag_estimate/(i+1)))
-        errors.append(torch.linalg.norm(diag_estimate[0, :50]/(i+1) - real_diag_first_50) / torch.linalg.norm(real_diag_first_50))
+        errors.append(torch.linalg.norm(diag_estimate[0]/(i+1) - real_diag_first_row) / torch.linalg.norm(real_diag_first_row))
         times.append(time.perf_counter() - start_time)
+
+        if i != 0:
+            diffs.append(
+                torch.linalg.norm(prev_diag_estimate / i - diag_estimate / (i + 1)) / torch.linalg.norm(diag_estimate / (i + 1))
+            )
 
         print("-----------------------------")
         print("vhp_samples =", i+1)
-        print("diff =", diffs[-1])
-        print("errors =", errors[-1])
+        print("diff =", diffs[-1].item())
+        print("errors =", errors[-1].item())
         print("time =", times[-1])
 
-        torch.save(torch.tensor(diffs), "data/diag_hessian/diffs.pt")
-        torch.save(torch.tensor(errors), "data/diag_hessian/errors.pt")
+        torch.save(torch.tensor(diffs), "data/diag_hessian/relative_l2_diffs.pt")
+        torch.save(torch.tensor(errors), "data/diag_hessian/partial_relative_l2_loss.pt")
         torch.save(torch.tensor(times), "data/diag_hessian/times.pt")
+    '''
 
     return hess_diag
 
@@ -162,9 +159,13 @@ if __name__ == '__main__':
         print("Computation time =", time.perf_counter() - start_t)
     '''
 
+    start_t = time.perf_counter()
     hess_diag = compute_hessian_diag_hutchinson(model_name=args.model,
                                                 cache_dir=args.cache_dir,
-                                                seed=args.seed,
-                                                vhp_samples=100000)
+                                                seed=args.seed)
+    print("Computation time =", time.perf_counter() - start_t)
 
-    #plot_heatmap(torch.abs(hess_diag)[0][:25].reshape(1, -1))
+    plot_heatmap(hess_diag)
+    torch.save(hess_diag, "data/diag_hessian/hessian_diag_q_proj_vhp_samples_100.pt")
+
+

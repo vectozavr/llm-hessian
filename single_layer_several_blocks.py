@@ -84,8 +84,6 @@ def compute_hessian_single_layer_several_blocks(model_name, cache_dir, seed, num
         hess = hess.to(device=dH.device)
         hess += dH / num_batches
 
-    torch.save(hess, "data/hessian_q_proj_all_blocks.pt")
-
     return hess
 
 
@@ -105,3 +103,5 @@ if __name__ == '__main__':
     # Computation time = 71551.41185522405 sec
 
     plot_heatmap(hess)
+    torch.save(hess, "data/hessian_q_proj_all_blocks.pt")
+
