@@ -80,11 +80,11 @@ def compute_hessian_diag_hutchinson(model_name, cache_dir, seed, block_number=0,
             v = v.to(device=params.device)
 
             _, Hv = torch.autograd.functional.vhp(ppl_fn, (params,), (v,))
-            diag_estimate += Hv[0] * v  # Diagonal approximation
+            diag_estimate += Hv[0] * v / num_batches  # Diagonal approximation
 
         hess_diag = hess_diag.to(device=diag_estimate.device)
 
-        hess_diag += diag_estimate / (vhp_samples * num_batches)
+        hess_diag += diag_estimate / vhp_samples
 
         print("Processed " + str((k+1)*model_input_bs) + " samples...")
 
@@ -92,9 +92,8 @@ def compute_hessian_diag_hutchinson(model_name, cache_dir, seed, block_number=0,
     '''
     print("Started")
     start_time = time.perf_counter()
-
-    real_diag_first_row = torch.diag(torch.load("data/hessian_q_proj_b60_t768.pt"))
-
+    
+    real_diag_first_row = torch.diag(torch.load("data/hessian_q_proj_b_60_t_768.pt"))
     diag_estimate = torch.zeros_like(params)
 
     diffs = [torch.tensor([1.0])]
@@ -167,5 +166,4 @@ if __name__ == '__main__':
 
     plot_heatmap(hess_diag)
     torch.save(hess_diag, "data/diag_hessian/hessian_diag_q_proj_vhp_samples_100.pt")
-
 
