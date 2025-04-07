@@ -18,22 +18,36 @@ GenAI Center of Excellence, King Abdullah University of Science and Technology, 
 
 ## Results
 
-Hessian of Perplexity for q_proj linear layer $Q_{proj} \in \mathbb{R}^{768 \times 768}$ from self attention (for the first 768 parameters = first row of q_proj):
+### Full Hessian (for different subsets of parameters)
 
-<img src="pdf/hessian_q_proj_t_768.png" alt="Hessian of q_proj" width="500"/>
+<b>On the left</b>: Hessian of Perplexity for q_proj linear layer $Q_{proj} \in \mathbb{R}^{768 \times 768}$ from self attention of the first block of OPT-125M (for the first 768 parameters = first row of q_proj):
 
-Hessian of Perplexity for all linear layers from the first block of OPT-125M (for the first 1800 parameters = 300 parameters for every linear layer $\times$ 6 linear layers):
+<b>On the right</b>: Hessian of Perplexity for all linear layers from the first block of OPT-125M (for the first 1800 parameters = 300 parameters for every linear layer $\times$ 6 linear layers):
 
-<img src="pdf/hessian_all_layers_first_block_t_300.png" alt="Hessian of all layers first block" width="500"/>
+<p align="center">
+  <img src="pdf/hessian_q_proj_t_768.png" alt="Hessian of q_proj" width="49%"/>
+  <img src="pdf/hessian_all_layers_first_block_t_300.png" alt="Hessian of all layers first block" width="49%"/>
+</p>
 
-Hessian of Perplexity for q_proj from all 12 blocks of OPT-125M (for the first 1800 parameters = 150 parameters for every q_proj layer $\times$ 12 blocks):
+<b>On the left</b>: Hessian of Perplexity for q_proj from all 12 blocks of OPT-125M (for the first 1800 parameters = 150 parameters for every q_proj layer $\times$ 12 blocks):
 
-<img src="pdf/hessian_q_proj_all_blocks_t_150.png" alt="Hessian of q_proj for all blocks" width="500"/>
+<b>On the right</b>: Hessian of Perplexity for all linear layers from all 12 blocks of OPT-125M (for the first 1800 parameters = 25 parameters for every linear layer $\times$ 6 linear layers for a block $\times$ 12 blocks):
 
-Hessian of Perplexity for all linear layers from all 12 blocks of OPT-125M (for the first 1800 parameters = 25 parameters for every linear layer $\times$ 6 linear layers for a block $\times$ 12 blocks):
+<p align="center">
+  <img src="pdf/hessian_q_proj_all_blocks_t_150.png" alt="Hessian of q_proj for all blocks" width="49%" />
+  <img src="pdf/hessian_all_layers_first_block_t_300.png" alt="Hessian of all layers first block" width="49%" />
+</p>
 
-<img src="pdf/hessian_all_layers_first_block_t_300.png" alt="Hessian of all layers first block" width="500"/>
+Experiments with different batch size $b \in \\{1, \cdots, 140\\}$:
 
+<img src="pdf/losses_vs_bs.png" alt="Different batch size" width="100%"/>
+
+
+### Diagonals of the Hessian (for the entire linear layer)
+
+Experiments with different number of Vector-Hessian Product samples $k \in {1, \cdots, 3000}$:
+
+<img src="pdf/losses_vs_k.png" alt="Different vhp k" width="100%"/>
 
 ## Setup
 Python 3.12.4
