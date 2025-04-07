@@ -59,6 +59,7 @@ We provide a quick overview of the arguments:
 - `--model`: The identifier for the model on the Hugging Face model hub.
 - `--cache_dir`: Directory for loading or storing LLM weights. The default is `llm_weights`.
 - `--seed`: Specifies a seed.
+- `--vhp_samples`: Specifies the number of Vector-Hessian Product samples for diagonal of the Hessian estimation.
 
 ## Available scripts
 
@@ -84,6 +85,15 @@ python several_layers_several_blocks.py \
     --model facebook/opt-125m \
     --cache_dir llm_weights \
     --seed 0
+```
+
+* If you want to compute the Diagonal of the Hessian of Perplexity for q_proj layer of the first block of LLM:
+```sh 
+python q_proj_hessian_diag.py \
+    --model facebook/opt-125m \
+    --cache_dir llm_weights \
+    --seed 0
+    --vhp_samples 100
 ```
 
 ## License
