@@ -137,6 +137,7 @@ if __name__ == '__main__':
     parser.add_argument('--model', type=str, help='LLaMA model', default="facebook/opt-125m")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--cache_dir", type=str, default="llm_weights")
+    parser.add_argument("--vhp_samples", type=int, default=100)
     args = parser.parse_args()
 
     check_gpus()
@@ -161,7 +162,8 @@ if __name__ == '__main__':
     start_t = time.perf_counter()
     hess_diag = compute_hessian_diag_hutchinson(model_name=args.model,
                                                 cache_dir=args.cache_dir,
-                                                seed=args.seed)
+                                                seed=args.seed,
+                                                vhp_samples=args.vhp_samples)
     print("Computation time =", time.perf_counter() - start_t)
 
     plot_heatmap(hess_diag)
