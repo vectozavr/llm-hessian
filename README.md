@@ -3,7 +3,7 @@
 <p align="center">
   <img src="https://img.shields.io/github/stars/vectozavr/llm-hessian?style=social"/>
   <img src="https://img.shields.io/github/forks/vectozavr/llm-hessian?style=social"/>
-  <img src="https://img.shields.io/github/license/vectozavr/llm-hessian"/>
+  <img src="https://img.shields.io/github/license/vectozavr/llm-hessian?style=flat&v=2"/>
 </p>
 
 <p align="center">
