@@ -157,5 +157,5 @@ MIT License. See [LICENSE](LICENSE) for details.
 ---
 
 ## 💬 Join the Discussion
-We welcome issues, feature requests, and contributions! Feel free to open an [issue](https://github.com/yourusername/hessian-perplexity/issues) or a [pull request](https://github.com/yourusername/hessian-perplexity/pulls).
+We welcome issues, feature requests, and contributions! Feel free to open an [issue](https://github.com/vectozavr/llm-hessian/issues) or a [pull request](https://github.com/vectozavr/llm-hessian/pulls).
 
