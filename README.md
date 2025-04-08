@@ -46,7 +46,7 @@ If you find our work helpful, please cite us:
 
 <p>
   <img src="pdf/hessian_q_proj_all_blocks_t_150.png" width="49%" alt="Hessian of q_proj all blocks">
-  <img src="pdf/hessian_all_layers_first_block_t_300.png" width="49%" alt="Hessian of all layers all blocks">
+  <img src="pdf/hessian_all_layers_all_blocks_t_25.png" width="49%" alt="Hessian of all layers all blocks">
 </p>
 
 <p>
