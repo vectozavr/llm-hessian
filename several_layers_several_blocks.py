@@ -1,14 +1,13 @@
 import torch.nn.functional as F
 import argparse
-import torch
 import time
 
-from utils import set_seed, get_llm, ppl_function, check_gpus, plot_heatmap
+from utils import *
 from torch.autograd.functional import hessian
 from data import get_cached_wikitext2
 
 
-def compute_hessian_several_layers_several_blocks(model_name, cache_dir, seed, num_blocks=12, num_layers=6, t=25, model_input_bs=4, b=140):
+def compute_hessian_several_layers_several_blocks(model_name, num_layers, num_blocks, t, b, model_input_bs, seed, cache_dir):
     # Setting seeds for reproducibility
     set_seed(seed)
 
@@ -16,7 +15,7 @@ def compute_hessian_several_layers_several_blocks(model_name, cache_dir, seed, n
     device = torch.device("cuda:0")
 
     # Get the test loader
-    testloader = get_cached_wikitext2(tokenizer, model.seqlen, seed=seed)
+    _, testloader = get_cached_wikitext2(tokenizer, model.seqlen, seed=seed)
 
     params = torch.zeros((t * num_layers * num_blocks), device=device, dtype=torch.float32)
     partial_weights_all = []
@@ -32,23 +31,18 @@ def compute_hessian_several_layers_several_blocks(model_name, cache_dir, seed, n
 
     print("Number of batches =", num_batches)
 
+    blocks = get_all_blocks(model)
     for i in range(num_blocks):
         # Access the first transformer layer and q_proj weight matrix
-        layer = model.model.decoder.layers[i]
-        self_attn = layer.self_attn
-
-        weight_matrix = [self_attn.q_proj.weight,
-                         self_attn.k_proj.weight,
-                         self_attn.v_proj.weight,
-                         self_attn.out_proj.weight,
-                         layer.fc1.weight,
-                         layer.fc2.weight]
+        block = blocks[i]
+        layers = find_layers(block)
+        weights = [l.weight for l in layers.values()][:num_layers]
 
         partial_weight_layer = []
         residual_blocks_layer = []
         for j in range(num_layers):
             # for each weight_matrix[i] take 'line_size' parameters from the first row of the 'weight_matrix'
-            w = weight_matrix[j]
+            w = weights[j]
             param_block = w[0][:t].clone().requires_grad_(True)
             partial_weight = w[1:]
             residual_block = w[0][t:].clone()
@@ -65,49 +59,46 @@ def compute_hessian_several_layers_several_blocks(model_name, cache_dir, seed, n
 
     def get_partial_ppl_fn(i_start):
         def partial_ppl_fn(x):
-            for i_layer in range(num_blocks):
-                def custom_forward(layer_number, matrix_number):
+            for j in range(num_blocks):
+                def custom_forward(layer_number, i_from):
                     def _custom_forward(self, inpt):
-                        __from = t * num_layers * layer_number + matrix_number * t
+                        __from = t * num_layers * i_from + layer_number * t
                         __to = __from + t
 
                         _param_block = x[__from:__to]
-                        _residual_block = residual_blocks_all[layer_number][matrix_number]
-                        concatenated_line = torch.cat((_param_block.to(device=_residual_block.device), _residual_block),
-                                                      dim=0)
+                        _residual_block = residual_blocks_all[i_from][layer_number]
+                        concatenated_line = torch.cat((_param_block.to(device=_residual_block.device), _residual_block), dim=0)
                         line_reshaped = concatenated_line.unsqueeze(0)
-                        _partial_weight = partial_weights_all[layer_number][matrix_number]
+                        _partial_weight = partial_weights_all[i_from][layer_number]
                         full_weights = torch.cat((line_reshaped, _partial_weight), dim=0)
 
                         return F.linear(inpt, full_weights, self.bias)
 
                     return _custom_forward
 
-                _layer = model.model.decoder.layers[i_layer]
-                _self_attn = _layer.self_attn
+                block = blocks[i]
+                layers = find_layers(block)
 
-                modules = [_self_attn.q_proj,
-                           _self_attn.k_proj,
-                           _self_attn.v_proj,
-                           _self_attn.out_proj,
-                           _layer.fc1,
-                           _layer.fc2]
+                for j_layer, layer_name in enumerate(layers):
+                    if j_layer >= num_layers:
+                        break
+                    layer = layers[layer_name]
+                    layer.forward = custom_forward(j_layer, j).__get__(layer, type(layer))
 
-                for j_matrix in range(num_layers):
-                    modules[j_matrix].forward = custom_forward(i_layer, j_matrix).__get__(modules[j_matrix],
-                                                                                          type(modules[j_matrix]))
-
-            return ppl_function(model, testloader, i_start=i_start, device=device, batch_size=model_input_bs)
+            return ppl_function(model, testloader, i_start=i_start, device=device, batch_size=model_input_bs, debug=False)
 
         return partial_ppl_fn
 
     hess = torch.zeros((t * num_layers * num_blocks, t * num_layers * num_blocks))
 
+    draw_progress_bar(0, num_batches)
     # NOTICE: here we rely on the additive property of the PPL function (Corollary 7.2 in a technical report)
     for k in range(num_batches):
         dH = hessian(get_partial_ppl_fn(i_start=k * model_input_bs), params)
         hess = hess.to(device=dH.device)
         hess += dH / num_batches
+
+        draw_progress_bar(k+1, num_batches)
 
     return hess
 
@@ -115,6 +106,11 @@ def compute_hessian_several_layers_several_blocks(model_name, cache_dir, seed, n
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, help='LLaMA model', default="facebook/opt-125m")
+    parser.add_argument("--t", type=int, default=5)
+    parser.add_argument("--num_layers", type=int, default=3)
+    parser.add_argument("--num_blocks", type=int, default=3)
+    parser.add_argument("--b", type=int, default=30)
+    parser.add_argument("--model_input_bs", type=int, default=2)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--cache_dir", default="llm_weights", type=str)
     args = parser.parse_args()
@@ -122,14 +118,15 @@ if __name__ == '__main__':
     check_gpus()
 
     start_t = time.perf_counter()
-    hess = compute_hessian_several_layers_several_blocks(model_name=args.model,
-                                                         cache_dir=args.cache_dir,
-                                                         seed=args.seed,
-                                                         num_blocks=12, num_layers=6, t=25)
+    hess = compute_hessian_several_layers_several_blocks(model_name=args.model, num_layers=args.num_layers,
+                                                         num_blocks=args.num_blocks, t=args.t, b=args.b,
+                                                         model_input_bs=args.model_input_bs, seed=args.seed,
+                                                         cache_dir=args.cache_dir)
     print("Computation time =", time.perf_counter() - start_t)
 
     # Computation time = 90927.86469955707 (all layers, all blocks, t=25)
     # Computation time = 71593.03141659603 (all layers, 1 block, t=300)
 
-    plot_heatmap(hess)
-    torch.save(hess, "data/diff_bs/hessian_all_layers_all_blocks.pt")
+    out_path_prefix = "data/hessian_" + str(args.num_layers) + "_layers_" + str(args.num_blocks) + "_blocks_t" + str(args.t) + "_b" + str(args.b) + "_seed" + str(args.seed)
+    plot_heatmap(torch.abs(hess), out_path_prefix + '.pdf')
+    torch.save(hess, out_path_prefix + ".pt")

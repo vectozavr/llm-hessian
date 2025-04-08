@@ -13,7 +13,8 @@ def draw_progress_bar(current, total, bar_length=30, prefix="Progress"):
     percent = 100 * current / total
     filled_length = int(bar_length * current // total)
     bar = '█' * filled_length + '-' * (bar_length - filled_length)
-    print(f"\r{prefix}: |{bar}| {percent:.2f}%", end='', flush=True)
+    end_char = '\n' if current == total else ''
+    print(f"\r{prefix}: |{bar}| {percent:.2f}%", end=end_char, flush=True)
 
 
 def check_gpus():
@@ -51,6 +52,37 @@ def get_llm(model_name, cache_dir="llm_weights"):
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
 
     return model, tokenizer
+
+
+def get_all_blocks(model):
+    if "opt" not in model.name_or_path:
+        return model.model.layers
+    else:
+        return model.model.decoder.layers
+
+
+def find_layers(block, layers=[nn.Linear], name=''):
+    """
+    Recursively find the layers of a certain type in a module.
+
+    Args:
+        block (nn.Module): PyTorch module.
+        layers (list): List of layer types to find.
+        name (str): Name of the module.
+
+    Returns:
+        dict: Dictionary of layers of the given type(s) within the module.
+    """
+
+    if type(block) in layers:
+        return {name: block}
+    res = {}
+
+    for name1, child in block.named_children():
+        res.update(find_layers(
+            child, layers=layers, name=name + '.' + name1 if name != '' else name1
+        ))
+    return res
 
 
 # Function to evaluate perplexity (ppl) specifically on the wikitext dataset
@@ -111,6 +143,11 @@ def model_output_function(model, testloader, i_start=0, batch_size=4, device=Non
 
     return lm_logits
 
+
+def get_nested_attr(obj, attr_path):
+    for attr in attr_path.split('.'):
+        obj = getattr(obj, attr)
+    return obj
 
 
 def plot_heatmap(tensor, out_path="heatmap_hessian.pdf"):

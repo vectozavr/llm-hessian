@@ -1,14 +1,13 @@
 import argparse
 import time
 
-import torch
 import torch.nn.functional as F
 
-from utils import set_seed, get_llm, ppl_function, check_gpus, plot_heatmap, plot_hist, model_output_function
+from utils import *
 from data import get_cached_wikitext2
 
 
-def compute_hessian_diag_hutchinson(model_name, cache_dir, seed, block_number=0, model_input_bs=4, b=60, vhp_samples=100):
+def compute_hessian_diag_hutchinson(model_name, layer_name, block_index, model_input_bs, b, vhp_samples, seed, cache_dir):
     set_seed(seed)
 
     model, tokenizer = get_llm(model_name, cache_dir)
@@ -17,12 +16,10 @@ def compute_hessian_diag_hutchinson(model_name, cache_dir, seed, block_number=0,
     # Get the test loader
     _, testloader = get_cached_wikitext2(tokenizer, model.seqlen, seed=seed)
 
-    # Access the first transformer layer and q_proj weight matrix
-    layer = model.model.decoder.layers[block_number]
-    self_attn = layer.self_attn
+    block = get_all_blocks(model)[block_index]
+    layer = get_nested_attr(block, layer_name)
 
-    # Full q_proj matrix:
-    params = self_attn.q_proj.weight.clone().requires_grad_(True)
+    params = layer.weight.clone().requires_grad_(True)
 
     samples_in_dataset = testloader.input_ids.numel() // model.seqlen
 
@@ -57,11 +54,11 @@ def compute_hessian_diag_hutchinson(model_name, cache_dir, seed, block_number=0,
     def get_partial_ppl_fn(i_start):
         def partial_ppl_fn(x):
             # Define custom forward method for q_proj
-            def custom_q_proj_forward(self, inpt):
+            def custom_forward(self, inpt):
                 return F.linear(input=inpt, weight=x, bias=self.bias)
 
             # Monkey-patch q_proj's forward method
-            self_attn.q_proj.forward = custom_q_proj_forward.__get__(self_attn.q_proj, type(self_attn.q_proj))
+            layer.forward = custom_forward.__get__(layer, type(layer))
 
             return ppl_function(model, testloader, i_start=i_start, device=device, batch_size=model_input_bs, debug=False)
 
@@ -70,23 +67,24 @@ def compute_hessian_diag_hutchinson(model_name, cache_dir, seed, block_number=0,
     # NOTICE: here we rely on the additive property of the PPL function (Corollary 7.2 in a technical report)
     hess_diag = torch.zeros_like(params, device=params.device)
 
+    draw_progress_bar(0, num_batches)
     for k in range(num_batches):
         ppl_fn = get_partial_ppl_fn(i_start=k * model_input_bs)
 
         diag_estimate = torch.zeros_like(params)
 
-        for _ in range(vhp_samples):
+        for j in range(vhp_samples):
             v = hadamard_vector(size=params.numel(), block_size=32).reshape(diag_estimate.shape)
             v = v.to(device=params.device)
 
             _, Hv = torch.autograd.functional.vhp(ppl_fn, (params,), (v,))
             diag_estimate += Hv[0] * v / num_batches  # Diagonal approximation
 
-        hess_diag = hess_diag.to(device=diag_estimate.device)
+            draw_progress_bar(k*vhp_samples + j + 1, num_batches*vhp_samples)
 
+        hess_diag = hess_diag.to(device=diag_estimate.device)
         hess_diag += diag_estimate / vhp_samples
 
-        print("Processed " + str((k+1)*model_input_bs) + " samples...")
 
     # NOTICE: This code is written for one single experiment in order to understand how errors evolve over time
     '''
@@ -135,9 +133,13 @@ def compute_hessian_diag_hutchinson(model_name, cache_dir, seed, block_number=0,
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, help='LLaMA model', default="facebook/opt-125m")
+    parser.add_argument("--layer_name", type=str, default="self_attn.q_proj")
+    parser.add_argument("--vhp_samples", type=int, default=10)
+    parser.add_argument("--block_index", type=int, default=0)
+    parser.add_argument("--b", type=int, default=30)
+    parser.add_argument("--model_input_bs", type=int, default=2)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--cache_dir", type=str, default="llm_weights")
-    parser.add_argument("--vhp_samples", type=int, default=100)
     args = parser.parse_args()
 
     check_gpus()
@@ -160,12 +162,12 @@ if __name__ == '__main__':
     '''
 
     start_t = time.perf_counter()
-    hess_diag = compute_hessian_diag_hutchinson(model_name=args.model,
-                                                cache_dir=args.cache_dir,
-                                                seed=args.seed,
-                                                vhp_samples=args.vhp_samples)
+    hess_diag = compute_hessian_diag_hutchinson(model_name=args.model, layer_name=args.layer_name,
+                                                vhp_samples=args.vhp_samples, block_index=args.block_index,
+                                                b=args.b, model_input_bs=args.model_input_bs, seed=args.seed,
+                                                cache_dir=args.cache_dir)
     print("Computation time =", time.perf_counter() - start_t)
 
-    plot_heatmap(hess_diag)
-    torch.save(hess_diag, "data/diag_hessian/hessian_diag_q_proj_vhp_samples_100.pt")
-
+    out_path_prefix = "data/diag_hessian/hessian_diag_" + args.layer_name + "_block" + str(args.block_index) + "_vhp_samples" + str(args.vhp_samples) + "_b" + str(args.b) + "_seed" + str(args.seed)
+    plot_heatmap(torch.abs(hess_diag), out_path_prefix + '.pdf')
+    torch.save(hess_diag, out_path_prefix + ".pt")
