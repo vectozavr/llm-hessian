@@ -1,9 +1,9 @@
 # Hessian of Perplexity for Large Language Models by PyTorch autograd
 
 <p align="center">
-  <img src="https://img.shields.io/github/stars/yourusername/hessian-perplexity?style=social"/>
-  <img src="https://img.shields.io/github/forks/yourusername/hessian-perplexity?style=social"/>
-  <img src="https://img.shields.io/github/license/yourusername/hessian-perplexity"/>
+  <img src="https://img.shields.io/github/stars/vectozavr/llm-hessian?style=social"/>
+  <img src="https://img.shields.io/github/forks/vectozavr/llm-hessian?style=social"/>
+  <img src="https://img.shields.io/github/license/vectozavr/llm-hessian"/>
 </p>
 
 <p align="center">
@@ -39,7 +39,7 @@ If you find our work helpful, please cite us:
   <img src="pdf/hessian_all_layers_first_block_t_300.png" width="49%" alt="Hessian of all layers">
 </p>
 
-<p align="center">
+<p>
   <i>Left: </i>Hessian for $Q_{proj} \in \mathbb{R}^{768 \times 768}$ from block 0 — first 768 params.<br>
   <i>Right: </i>Hessian for all 6 linear layers in block 0 — 300 params each.
 </p>
@@ -49,7 +49,7 @@ If you find our work helpful, please cite us:
   <img src="pdf/hessian_all_layers_first_block_t_300.png" width="49%" alt="Hessian of all layers all blocks">
 </p>
 
-<p align="center">
+<p>
   <i>Left: </i>Hessian for q_proj across 12 blocks — 150 params each.<br>
   <i>Right: </i>Hessian for all layers in 12 blocks — 25 params each × 6 layers/block.
 </p>
