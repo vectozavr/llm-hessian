@@ -54,6 +54,16 @@ If you find our work helpful, please cite us:
   <i>Right: </i>Hessian for all layers in 12 blocks — 25 params each × 6 layers/block.
 </p>
 
+### 🔽 Download PyTorch Tensors
+Saved as PyTorch tensors:
+* [hessian_q_proj_t_768.pt](https://github.com/vectozavr/llm-hessian/blob/main/data/hessian_q_proj_t_768.pt)
+* [hessian_q_proj_all_blocks_t_150.pt](https://github.com/vectozavr/llm-hessian/blob/main/data/hessian_q_proj_all_blocks_t_150.pt)
+* [hessian_all_layers_first_block_t_300.pt](https://github.com/vectozavr/llm-hessian/blob/main/data/hessian_all_layers_first_block_t_300.pt)
+* [hessian_all_layers_all_blocks_t_25.pt](https://github.com/vectozavr/llm-hessian/blob/main/data/hessian_all_layers_all_blocks_t_25.pt)
+* [hessian_diag_q_proj_vhp_samples_5000.pt](https://github.com/vectozavr/llm-hessian/blob/main/data/diag_hessian/hessian_diag_q_proj_vhp_samples_5000.pt)
+
+
+
 ### 🔶 Influence of Batch Size
 <img src="pdf/losses_vs_bs.png" width="100%" alt="Hessian vs batch size">
 
