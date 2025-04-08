@@ -103,6 +103,9 @@ pip install -r requirements.txt
 > - Use larger `--model_input_bs` on GPUs with more memory to speed up runtime.
 > - Higher `--b` and `--vhp_samples` give more accurate results, but increase compute time.
 
+> [!NOTE]  
+> Please note that after running any scripts, a `.pt` Hessian tensor and a `.pdf` heatmap of the Hessian will be saved in the `/data` folder.
+
 ---
 
 ## 🧪 Running Examples
