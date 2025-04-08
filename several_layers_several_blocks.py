@@ -36,7 +36,11 @@ def compute_hessian_several_layers_several_blocks(model_name, num_layers, num_bl
         # Access the first transformer layer and q_proj weight matrix
         block = blocks[i]
         layers = find_layers(block)
-        weights = [l.weight for l in layers.values()][:num_layers]
+        weights = []
+        for j_layer, layer_name in enumerate(layers):
+            if j_layer >= num_layers:
+                break
+            weights.append(layers[layer_name].weight)
 
         partial_weight_layer = []
         residual_blocks_layer = []
@@ -76,7 +80,7 @@ def compute_hessian_several_layers_several_blocks(model_name, num_layers, num_bl
 
                     return _custom_forward
 
-                block = blocks[i]
+                block = blocks[j]
                 layers = find_layers(block)
 
                 for j_layer, layer_name in enumerate(layers):

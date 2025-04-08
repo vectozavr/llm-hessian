@@ -13,6 +13,7 @@ A GitHub repository with [the Technical report](https://arxiv.org/abs/2504.04520
       url={https://arxiv.org/abs/2504.04520}, 
 }
 ```
+[Paper](https://arxiv.org/abs/2504.04520)
 
 ---
 
