@@ -1,10 +1,7 @@
 # Hessian of Perplexity for Large Language Models by PyTorch autograd (Open Source)
-A GitHub repository with [the Technical report]() on how to accurately compute the Hessian of Perplexity function for Large Language Models (LLMs).
+A GitHub repository with [the Technical report](https://arxiv.org/abs/2504.04520) on how to accurately compute the Hessian of Perplexity function for Large Language Models (LLMs).
 
-*Ivan Ilin*<br>
-GenAI Center of Excellence, King Abdullah University of Science and Technology, Thuwal, Saudi Arabia<br>
-[Paper](link)
-
+## Cite
 ```bibtex
 @misc{ilin2025hessian,
       title={Hessian of Perplexity for Large Language Models by PyTorch autograd (Open Source)}, 
