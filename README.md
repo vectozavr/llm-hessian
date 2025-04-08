@@ -24,19 +24,17 @@ A GitHub repository with [the Technical report](https://arxiv.org/abs/2504.04520
   <img src="pdf/hessian_q_proj_t_768.png" alt="Hessian of q_proj" width="49%"/>
   <img src="pdf/hessian_all_layers_first_block_t_300.png" alt="Hessian of all layers first block" width="49%"/>
 </p>
+<b>On the left</b>: Hessian of Perplexity for q_proj linear layer $Q_{proj} \in \mathbb{R}^{768 \times 768}$ from self attention of the first block of OPT-125M (for the first 768 parameters = first row of q_proj).
 
-<b>On the left</b>: Hessian of Perplexity for q_proj linear layer $Q_{proj} \in \mathbb{R}^{768 \times 768}$ from self attention of the first block of OPT-125M (for the first 768 parameters = first row of q_proj):
-
-<b>On the right</b>: Hessian of Perplexity for all linear layers from the first block of OPT-125M (for the first 1800 parameters = 300 parameters for every linear layer $\times$ 6 linear layers):
+<b>On the right</b>: Hessian of Perplexity for all linear layers from the first block of OPT-125M (for the first 1800 parameters = 300 parameters for every linear layer $\times$ 6 linear layers).
 
 <p>
   <img src="pdf/hessian_q_proj_all_blocks_t_150.png" alt="Hessian of q_proj for all blocks" width="49%" />
   <img src="pdf/hessian_all_layers_first_block_t_300.png" alt="Hessian of all layers first block" width="49%" />
 </p>
+<b>On the left</b>: Hessian of Perplexity for q_proj from all 12 blocks of OPT-125M (for the first 1800 parameters = 150 parameters for every q_proj layer $\times$ 12 blocks).
 
-<b>On the left</b>: Hessian of Perplexity for q_proj from all 12 blocks of OPT-125M (for the first 1800 parameters = 150 parameters for every q_proj layer $\times$ 12 blocks):
-
-<b>On the right</b>: Hessian of Perplexity for all linear layers from all 12 blocks of OPT-125M (for the first 1800 parameters = 25 parameters for every linear layer $\times$ 6 linear layers for a block $\times$ 12 blocks):
+<b>On the right</b>: Hessian of Perplexity for all linear layers from all 12 blocks of OPT-125M (for the first 1800 parameters = 25 parameters for every linear layer $\times$ 6 linear layers for a block $\times$ 12 blocks).
 
 <img src="pdf/losses_vs_bs.png" alt="Different batch size" width="100%"/>
 
@@ -50,7 +48,7 @@ Experiments with different batch size $b \in \\{1, \cdots, 140\\}$.
 Experiments with different number of Vector-Hessian Product samples $k \in {1, \cdots, 3000}$.
 
 ## Setup
-Python 3.12.4
+[Python 3.12.4](https://www.python.org/downloads/release/python-3124/) 🐍
 ```sh
 pip install -r requirements.txt
 ```
@@ -131,7 +129,7 @@ python hessian_diag_single_layer.py \
     --block_index 0 \
     --b 30 \
     --model_input_bs 2 \
-    --seed 0
+    --seed 0 \
     --cache_dir llm_weights
 ```
 
