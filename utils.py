@@ -85,12 +85,25 @@ def find_layers(block, layers=[nn.Linear], name=''):
     return res
 
 
+def val_seqlen(seqlen, model_seqlen):
+    if seqlen == 'max':
+        seqlen = model_seqlen
+    else:
+        try:
+            seqlen = int(seqlen)
+        except:
+            print('`seqlen` parameter should be either `max` or convertable to an integer, got `' + seqlen + '`, set seqlen = model.seqlen instead...')
+            seqlen = model_seqlen
+    return seqlen
+
 # Function to evaluate perplexity (ppl) specifically on the wikitext dataset
 # Give the average PPL score on a batch of size batch_size
-def ppl_function(model, testloader, i_start=0, batch_size=4, device=None, debug=True):
+def ppl_function(model, testloader, i_start=0, batch_size=4, device=None, debug=True, seqlen='max'):
+    seqlen = val_seqlen(seqlen, model.seqlen)
+
     # Get input IDs
     testenc = testloader.input_ids
-    samples_in_dataset = testenc.numel() // model.seqlen
+    samples_in_dataset = testenc.numel() // seqlen
 
     if debug:
         print(f"batch_size = {batch_size}")
@@ -99,8 +112,8 @@ def ppl_function(model, testloader, i_start=0, batch_size=4, device=None, debug=
     j = min(i_start+batch_size, i_start+samples_in_dataset)
 
     # Prepare inputs and move to device
-    inputs = testenc[:, (i_start * model.seqlen):(j * model.seqlen)].to(device)
-    inputs = inputs.reshape(j-i_start, model.seqlen)
+    inputs = testenc[:, (i_start * seqlen):(j * seqlen)].to(device)
+    inputs = inputs.reshape(j-i_start, seqlen)
 
     # Forward pass through the model
     lm_logits = model(inputs).logits
@@ -118,15 +131,17 @@ def ppl_function(model, testloader, i_start=0, batch_size=4, device=None, debug=
 
     # IMPORTANT: I skip this step to make this function having additive properties (Corollary 7.2. in a technical report)
     # Compute perplexity
-    # ppl = torch.exp(neg_log_likelihood / (nsamples * model.seqlen))
+    # ppl = torch.exp(neg_log_likelihood / (nsamples * seqlen))
 
     return neg_log_likelihood
 
 
-def model_output_function(model, testloader, i_start=0, batch_size=4, device=None, debug=True):
+def model_output_function(model, testloader, i_start=0, batch_size=4, device=None, debug=True, seqlen='max'):
+    seqlen = val_seqlen(seqlen, model.seqlen)
+
     # Get input IDs
     testenc = testloader.input_ids
-    samples_in_dataset = testenc.numel() // model.seqlen
+    samples_in_dataset = testenc.numel() // seqlen
 
     if debug:
         print(f"batch_size = {batch_size}")
@@ -135,8 +150,8 @@ def model_output_function(model, testloader, i_start=0, batch_size=4, device=Non
     j = min(i_start+batch_size, i_start+samples_in_dataset)
 
     # Prepare inputs and move to device
-    inputs = testenc[:, (i_start * model.seqlen):(j * model.seqlen)].to(device)
-    inputs = inputs.reshape(j-i_start, model.seqlen)
+    inputs = testenc[:, (i_start * seqlen):(j * seqlen)].to(device)
+    inputs = inputs.reshape(j-i_start, seqlen)
 
     # Forward pass through the model
     lm_logits = model(inputs).logits
@@ -148,6 +163,12 @@ def get_nested_attr(obj, attr_path):
     for attr in attr_path.split('.'):
         obj = getattr(obj, attr)
     return obj
+
+
+def disable_non_differential_modules():
+    torch.backends.cuda.enable_flash_sdp(False)
+    torch.backends.cuda.enable_math_sdp(True)
+    torch.backends.cuda.enable_mem_efficient_sdp(False)
 
 
 def plot_heatmap(tensor, out_path="heatmap_hessian.pdf"):

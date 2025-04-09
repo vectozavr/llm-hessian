@@ -7,9 +7,11 @@ from torch.autograd.functional import hessian
 from data import get_cached_wikitext2
 
 
-def compute_hessian_several_layers_several_blocks(model_name, num_layers, num_blocks, t, b, model_input_bs, seed, cache_dir):
+def compute_hessian_several_layers_several_blocks(model_name, num_layers, num_blocks, t, b, model_input_bs, seqlen, seed, cache_dir):
     # Setting seeds for reproducibility
     set_seed(seed)
+
+    disable_non_differential_modules()
 
     model, tokenizer = get_llm(model_name, cache_dir)
     device = torch.device("cuda:0")
@@ -26,6 +28,7 @@ def compute_hessian_several_layers_several_blocks(model_name, num_layers, num_bl
     b = max(1, min(b, samples_in_dataset))
     print("Total number of samples =", b)
 
+    model_input_bs = min(b, model_input_bs)
     assert b % model_input_bs == 0, "`b` should be divisible by `model_input_bs`"
     num_batches = b // model_input_bs
 
@@ -115,6 +118,7 @@ if __name__ == '__main__':
     parser.add_argument("--num_blocks", type=int, default=3)
     parser.add_argument("--b", type=int, default=30)
     parser.add_argument("--model_input_bs", type=int, default=2)
+    parser.add_argument("--seqlen", type=str, default=2048)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--cache_dir", default="llm_weights", type=str)
     args = parser.parse_args()
@@ -124,8 +128,8 @@ if __name__ == '__main__':
     start_t = time.perf_counter()
     hess = compute_hessian_several_layers_several_blocks(model_name=args.model, num_layers=args.num_layers,
                                                          num_blocks=args.num_blocks, t=args.t, b=args.b,
-                                                         model_input_bs=args.model_input_bs, seed=args.seed,
-                                                         cache_dir=args.cache_dir)
+                                                         model_input_bs=args.model_input_bs, seqlen=args.seqlen,
+                                                         seed=args.seed, cache_dir=args.cache_dir)
     print("Computation time =", time.perf_counter() - start_t)
 
     # Computation time = 90927.86469955707 (all layers, all blocks, t=25)

@@ -9,9 +9,11 @@ from utils import *
 from data import get_cached_wikitext2
 
 
-def compute_hessian_single_layer_single_block(model_name, layer_name, block_index, t, b, model_input_bs, seed, cache_dir):
+def compute_hessian_single_layer_single_block(model_name, layer_name, block_index, t, b, model_input_bs, seqlen, seed, cache_dir):
     # Setting seeds for reproducibility
     set_seed(seed)
+
+    disable_non_differential_modules()
 
     model, tokenizer = get_llm(model_name, cache_dir)
     device = torch.device("cuda:0")
@@ -33,6 +35,7 @@ def compute_hessian_single_layer_single_block(model_name, layer_name, block_inde
     b = max(1, min(b, samples_in_dataset))
     print("Total number of samples =", b)
 
+    model_input_bs = min(b, model_input_bs)
     assert b % model_input_bs == 0, "`b` should be divisible by `model_input_bs`"
     num_batches = b // model_input_bs
 
@@ -51,7 +54,7 @@ def compute_hessian_single_layer_single_block(model_name, layer_name, block_inde
             # Monkey-patch forward method
             layer.forward = custom_forward.__get__(layer, type(layer))
 
-            return ppl_function(model, testloader, i_start=i_start, device=device, batch_size=model_input_bs, debug=False)
+            return ppl_function(model, testloader, i_start=i_start, device=device, batch_size=model_input_bs, debug=False, seqlen=seqlen)
 
         return partial_ppl_fn
 
@@ -77,9 +80,10 @@ if __name__ == '__main__':
     parser.add_argument('--model', type=str, help='LLaMA model', default="facebook/opt-125m")
     parser.add_argument("--layer_name", type=str, default="self_attn.q_proj")
     parser.add_argument("--block_index", type=int, default=0)
-    parser.add_argument("--t", type=int, default=5)
-    parser.add_argument("--b", type=int, default=30)
-    parser.add_argument("--model_input_bs", type=int, default=2)
+    parser.add_argument("--t", type=int, default=768)
+    parser.add_argument("--b", type=int, default=60)
+    parser.add_argument("--model_input_bs", type=int, default=1)
+    parser.add_argument("--seqlen", type=str, default=2048)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--cache_dir", type=str, default="llm_weights")
     args = parser.parse_args()
@@ -89,8 +93,8 @@ if __name__ == '__main__':
     start_t = time.perf_counter()
     hess = compute_hessian_single_layer_single_block(model_name=args.model, layer_name=args.layer_name,
                                                      block_index=args.block_index, t=args.t, b=args.b,
-                                                     model_input_bs=args.model_input_bs, seed=args.seed,
-                                                     cache_dir=args.cache_dir)
+                                                     model_input_bs=args.model_input_bs, seqlen=args.seqlen,
+                                                     seed=args.seed, cache_dir=args.cache_dir)
     print("Computation time =", time.perf_counter() - start_t)
 
     # Computation time = 29338.510749154957 sec

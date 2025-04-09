@@ -30,6 +30,16 @@ If you find our work helpful, please cite us:
 }
 ```
 
+## ✅ Model Compatibility
+
+This repository is **compatible** with:
+
+- 🧠 [**OPT models**](https://huggingface.co/models?search=facebook/opt) (e.g. `facebook/opt-125m`)
+- 🐑 [**LLaMA 2/3/4 models**](https://huggingface.co/models?search=llama) (e.g. `meta-llama/Llama-3.2-1B`)
+- 🐣 [**TinyLlama**](https://huggingface.co/TinyLlama) (e.g. `TinyLlama/TinyLlama-1.1B-Chat-v1.0`)
+
+These models are supported via the Hugging Face Transformers interface.
+
 ---
 
 ## 📊 Results
@@ -87,19 +97,20 @@ pip install -r requirements.txt
 ---
 
 ## 🚀 Parameters
-| Argument            | Description |
-|---------------------|-------------|
-| `--model`           | Hugging Face model identifier. |
-| `--layer_name`      | Name of the linear layer to evaluate. |
-| `--t`               | Number of parameters to consider per layer. |
-| `--block_index`     | Index of a single block (used in some scripts). |
-| `--num_blocks`      | Number of blocks to include. |
-| `--num_layers`      | Number of linear layers per block. |
-| `--b`               | Total number of samples for perplexity. |
-| `--vhp_samples`     | VHP samples for Hessian diagonal estimation. |
-| `--model_input_bs`  | Number of samples per batch. |
-| `--cache_dir`       | Where to load/store weights. Default: `llm_weights`. |
-| `--seed`            | Random seed. |
+| Argument           | Description                                                          |
+|--------------------|----------------------------------------------------------------------|
+| `--model`          | Hugging Face model identifier.                                       |
+| `--layer_name`     | Name of the linear layer to evaluate.                                |
+| `--t`              | Number of parameters to consider per layer.                          |
+| `--block_index`    | Index of a single block (used in some scripts).                      |
+| `--num_blocks`     | Number of blocks to include.                                         |
+| `--num_layers`     | Number of linear layers per block.                                   |
+| `--b`              | Total number of samples for perplexity.                              |
+| `--vhp_samples`    | VHP samples for Hessian diagonal estimation.                         |
+| `--model_input_bs` | Number of samples per batch.                                         |
+| `--seqlen`         | The sequence length for the model. By default it is equal to model.seqlen |
+| `--cache_dir`      | Where to load/store weights. Default: `llm_weights`.                 |
+| `--seed`           | Random seed.                                                         |
 
 > 💡 **Tips:**
 > - Use larger `--model_input_bs` on GPUs with more memory to speed up runtime.
