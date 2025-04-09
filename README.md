@@ -16,7 +16,7 @@
 ## 📖 Overview
 This repository provides an accurate and efficient implementation for computing the **Hessian of the Perplexity** function in LLMs such as OPT-125M using PyTorch's native autograd engine. Results include full Hessian matrices and their diagonals across different layers and configurations.
 
-## 📄 Citation
+## 📚 Citation
 If you find our work helpful, please cite us:
 ```bibtex
 @misc{ilin2025hessian,
@@ -33,7 +33,7 @@ If you find our work helpful, please cite us:
 ---
 
 ## 📊 Results
-### 🔵 Full Hessian (for subsets of parameters)
+### 📌 Full Hessian (Heatmaps for different subsets of parameters)
 <p>
   <img src="pdf/hessian_q_proj_t_768.png" width="49%" alt="Hessian of q_proj">
   <img src="pdf/hessian_all_layers_first_block_t_300.png" width="49%" alt="Hessian of all layers">
@@ -67,12 +67,12 @@ Saved as PyTorch tensors:
 ### 🔶 Influence of Batch Size
 <img src="pdf/losses_vs_bs.png" width="100%" alt="Hessian vs batch size">
 
-Experiments with varying batch size $b \in \{1, ..., 140\}$.
+Experiments with varying batch size $b \in \\{1, ..., 140\\}$.
 
-### 🟡 Diagonals of the Hessian (entire linear layer)
+### ⭐ Diagonals of the Hessian (entire linear layer)
 <img src="pdf/losses_vs_k.png" width="100%" alt="VHP samples">
 
-Varying number of VHP samples $k \in \{1, ..., 3000\}$ for diagonal estimation.
+Varying number of VHP samples $k \in \\{1, ..., 3000\\}$ for diagonal estimation.
 
 ---
 
@@ -103,12 +103,12 @@ pip install -r requirements.txt
 > - Use larger `--model_input_bs` on GPUs with more memory to speed up runtime.
 > - Higher `--b` and `--vhp_samples` give more accurate results, but increase compute time.
 
-> [!NOTE]  
-> Please note that after running any scripts, a `.pt` Hessian tensor and a `.pdf` heatmap of the Hessian will be saved in the `/data` folder.
-
 ---
 
-## 🧪 Running Examples
+## 🔬 Running your experiments
+
+> [!NOTE]  
+> Please note that after running any scripts, a `.pt` Hessian tensor and a `.pdf` heatmap of the Hessian will be saved in the `/data` folder.
 
 ### 🔹 Single Layer from One Block
 ```bash
@@ -149,7 +149,7 @@ python several_layers_several_blocks.py \
     --cache_dir llm_weights
 ```
 
-### 🔹 Diagonal Estimation for q_proj Layer
+### 🔹 Compute only Diagonal Elements (full layer)
 ```bash
 python hessian_diag_single_layer.py \
     --model facebook/opt-125m \
