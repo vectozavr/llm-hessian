@@ -82,6 +82,8 @@ Varying number of VHP samples $k \in \{1, ..., 3000\}$ for diagonal estimation.
 pip install -r requirements.txt
 ```
 
+📦 [Click here for full Python 3.12.4 installation guide](PYTHON_INSTALL.md)
+
 ---
 
 ## 🚀 Parameters
