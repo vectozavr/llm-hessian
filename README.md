@@ -97,20 +97,20 @@ pip install -r requirements.txt
 ---
 
 ## 🚀 Parameters
-| Argument           | Description                                                          |
-|--------------------|----------------------------------------------------------------------|
-| `--model`          | Hugging Face model identifier.                                       |
-| `--layer_name`     | Name of the linear layer to evaluate.                                |
-| `--t`              | Number of parameters to consider per layer.                          |
-| `--block_index`    | Index of a single block (used in some scripts).                      |
-| `--num_blocks`     | Number of blocks to include.                                         |
-| `--num_layers`     | Number of linear layers per block.                                   |
-| `--b`              | Total number of samples for perplexity.                              |
-| `--vhp_samples`    | VHP samples for Hessian diagonal estimation.                         |
-| `--model_input_bs` | Number of samples per batch.                                         |
-| `--seqlen`         | The sequence length for the model. By default it is equal to model.seqlen |
-| `--cache_dir`      | Where to load/store weights. Default: `llm_weights`.                 |
-| `--seed`           | Random seed.                                                         |
+| Argument           | Description                                          |
+|--------------------|------------------------------------------------------|
+| `--model`          | Hugging Face model identifier.                       |
+| `--layer_name`     | Name of the linear layer to evaluate.                |
+| `--t`              | Number of parameters to consider per layer.          |
+| `--block_index`    | Index of a single block (used in some scripts).      |
+| `--num_blocks`     | Number of blocks to include.                         |
+| `--num_layers`     | Number of linear layers per block.                   |
+| `--b`              | Total number of samples for perplexity.              |
+| `--vhp_samples`    | VHP samples for Hessian diagonal estimation.         |
+| `--model_input_bs` | Number of samples per batch.                         |
+| `--seqlen`         | The sequence length for the model. 2048 by default.  |
+| `--cache_dir`      | Where to load/store weights. Default: `llm_weights`. |
+| `--seed`           | Random seed.                                         |
 
 > 💡 **Tips:**
 > - Use larger `--model_input_bs` on GPUs with more memory to speed up runtime.

@@ -92,7 +92,7 @@ def compute_hessian_several_layers_several_blocks(model_name, num_layers, num_bl
                     layer = layers[layer_name]
                     layer.forward = custom_forward(j_layer, j).__get__(layer, type(layer))
 
-            return ppl_function(model, testloader, i_start=i_start, device=device, batch_size=model_input_bs, debug=False)
+            return ppl_function(model, testloader, i_start=i_start, device=device, batch_size=model_input_bs, debug=False, seqlen=seqlen)
 
         return partial_ppl_fn
 
@@ -118,13 +118,14 @@ if __name__ == '__main__':
     parser.add_argument("--num_blocks", type=int, default=3)
     parser.add_argument("--b", type=int, default=30)
     parser.add_argument("--model_input_bs", type=int, default=2)
-    parser.add_argument("--seqlen", type=str, default=2048)
+    parser.add_argument("--seqlen", type=int, default=2048)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--cache_dir", default="llm_weights", type=str)
     args = parser.parse_args()
 
     check_gpus()
 
+    print('Computing Hessian for layers (1-' + str(args.num_layers) + ') from blocks (1-' + str(args.num_blocks) + ') of ' + args.model)
     start_t = time.perf_counter()
     hess = compute_hessian_several_layers_several_blocks(model_name=args.model, num_layers=args.num_layers,
                                                          num_blocks=args.num_blocks, t=args.t, b=args.b,

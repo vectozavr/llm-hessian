@@ -63,7 +63,7 @@ def compute_hessian_diag_hutchinson(model_name, layer_name, block_index, model_i
             # Monkey-patch q_proj's forward method
             layer.forward = custom_forward.__get__(layer, type(layer))
 
-            return ppl_function(model, testloader, i_start=i_start, device=device, batch_size=model_input_bs, debug=False)
+            return ppl_function(model, testloader, i_start=i_start, device=device, batch_size=model_input_bs, debug=False, seqlen=seqlen)
 
         return partial_ppl_fn
 
@@ -141,29 +141,12 @@ if __name__ == '__main__':
     parser.add_argument("--block_index", type=int, default=0)
     parser.add_argument("--b", type=int, default=30)
     parser.add_argument("--model_input_bs", type=int, default=2)
-    parser.add_argument("--seqlen", type=str, default=2048)
+    parser.add_argument("--seqlen", type=int, default=2048)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--cache_dir", type=str, default="llm_weights")
     args = parser.parse_args()
 
     check_gpus()
-
-    '''
-    vhp_samples_list = [1, 10, 100, 1000, 3000, 5000, 10000, 30000, 50000, 100000]
-
-    for vhp_samples in vhp_samples_list:
-        print("vhp_samples =", vhp_samples)
-
-        start_t = time.perf_counter()
-        hess_diag = compute_hessian_diag_hutchinson(model_name=args.model,
-                                                    cache_dir=args.cache_dir,
-                                                    seed=args.seed,
-                                                    vhp_samples=vhp_samples)
-
-        torch.save(hess_diag, "data/diag_hessian/hessian_diag_q_proj_vhp_samples_" + str(vhp_samples) + ".pt")
-
-        print("Computation time =", time.perf_counter() - start_t)
-    '''
 
     start_t = time.perf_counter()
     hess_diag = compute_hessian_diag_hutchinson(model_name=args.model, layer_name=args.layer_name,

@@ -85,21 +85,10 @@ def find_layers(block, layers=[nn.Linear], name=''):
     return res
 
 
-def val_seqlen(seqlen, model_seqlen):
-    if seqlen == 'max':
-        seqlen = model_seqlen
-    else:
-        try:
-            seqlen = int(seqlen)
-        except:
-            print('`seqlen` parameter should be either `max` or convertable to an integer, got `' + seqlen + '`, set seqlen = model.seqlen instead...')
-            seqlen = model_seqlen
-    return seqlen
-
 # Function to evaluate perplexity (ppl) specifically on the wikitext dataset
 # Give the average PPL score on a batch of size batch_size
-def ppl_function(model, testloader, i_start=0, batch_size=4, device=None, debug=True, seqlen='max'):
-    seqlen = val_seqlen(seqlen, model.seqlen)
+def ppl_function(model, testloader, i_start=0, batch_size=4, device=None, debug=True, seqlen=2048):
+    seqlen = min(seqlen, model.seqlen)
 
     # Get input IDs
     testenc = testloader.input_ids
@@ -136,8 +125,8 @@ def ppl_function(model, testloader, i_start=0, batch_size=4, device=None, debug=
     return neg_log_likelihood
 
 
-def model_output_function(model, testloader, i_start=0, batch_size=4, device=None, debug=True, seqlen='max'):
-    seqlen = val_seqlen(seqlen, model.seqlen)
+def model_output_function(model, testloader, i_start=0, batch_size=4, device=None, debug=True, seqlen=2048):
+    seqlen = min(seqlen, model.seqlen)
 
     # Get input IDs
     testenc = testloader.input_ids

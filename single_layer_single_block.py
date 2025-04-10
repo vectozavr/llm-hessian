@@ -1,7 +1,6 @@
 import argparse
 import time
 
-import torch
 import torch.nn.functional as F
 
 from torch.autograd.functional import hessian
@@ -77,18 +76,19 @@ def compute_hessian_single_layer_single_block(model_name, layer_name, block_inde
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, help='LLaMA model', default="facebook/opt-125m")
+    parser.add_argument('--model', type=str, help='LLaMA model', default="meta-llama/Llama-3.2-1B")
     parser.add_argument("--layer_name", type=str, default="self_attn.q_proj")
     parser.add_argument("--block_index", type=int, default=0)
-    parser.add_argument("--t", type=int, default=768)
-    parser.add_argument("--b", type=int, default=60)
+    parser.add_argument("--t", type=int, default=25)
+    parser.add_argument("--b", type=int, default=4)
     parser.add_argument("--model_input_bs", type=int, default=1)
-    parser.add_argument("--seqlen", type=str, default=2048)
+    parser.add_argument("--seqlen", type=int, default=2048)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--cache_dir", type=str, default="llm_weights")
     args = parser.parse_args()
 
     check_gpus()
+    print('Computing Hessian for ' + args.layer_name + ' from block ' + str(args.block_index) + ' of ' + args.model)
 
     start_t = time.perf_counter()
     hess = compute_hessian_single_layer_single_block(model_name=args.model, layer_name=args.layer_name,
