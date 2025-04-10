@@ -113,8 +113,8 @@ pip install -r requirements.txt
 | `--seed`           | Random seed.                                         |
 
 > 💡 **Tips:**
-> - Use larger `--model_input_bs` on GPUs with more memory to speed up runtime.
-> - Higher `--b` and `--vhp_samples` give more accurate results, but increase compute time.
+> - Use larger `--model_input_bs` or `--seqlen` on GPUs with more memory to speed up runtime.
+> - Higher `--b` $\cdot$ `--seqlen` and `--vhp_samples` give more accurate results, but increase compute time.
 
 ---
 
@@ -126,12 +126,12 @@ pip install -r requirements.txt
 ### 🔹 Single Layer from One Block
 ```bash
 python single_layer_single_block.py \
-    --model facebook/opt-125m \
+    --model meta-llama/Llama-3.2-1B \
     --layer_name self_attn.q_proj \
     --block_index 0 \
     --t 5 \
     --b 30 \
-    --model_input_bs 2 \
+    --model_input_bs 1 \
     --seed 0 \
     --cache_dir llm_weights
 ```
@@ -139,12 +139,12 @@ python single_layer_single_block.py \
 ### 🔹 Single Layer from Several Blocks
 ```bash
 python single_layer_several_blocks.py \
-    --model facebook/opt-125m \
+    --model meta-llama/Llama-3.2-1B \
     --layer_name self_attn.q_proj \
     --t 5 \
     --num_blocks 3 \
     --b 30 \
-    --model_input_bs 2 \
+    --model_input_bs 1 \
     --seed 0 \
     --cache_dir llm_weights
 ```
@@ -152,12 +152,12 @@ python single_layer_several_blocks.py \
 ### 🔹 Several Layers from Several Blocks
 ```bash
 python several_layers_several_blocks.py \
-    --model facebook/opt-125m \
+    --model meta-llama/Llama-3.2-1B \
     --t 5 \
     --num_layers 3 \
     --num_blocks 3 \
     --b 30 \
-    --model_input_bs 2 \
+    --model_input_bs 1 \
     --seed 0 \
     --cache_dir llm_weights
 ```
@@ -165,12 +165,12 @@ python several_layers_several_blocks.py \
 ### 🔹 Compute only Diagonal Elements (full layer)
 ```bash
 python hessian_diag_single_layer.py \
-    --model facebook/opt-125m \
+    --model meta-llama/Llama-3.2-1B \
     --layer_name self_attn.q_proj \
     --vhp_samples 10 \
     --block_index 0 \
     --b 30 \
-    --model_input_bs 2 \
+    --model_input_bs 1 \
     --seed 0 \
     --cache_dir llm_weights
 ```

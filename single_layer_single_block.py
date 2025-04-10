@@ -79,8 +79,8 @@ if __name__ == '__main__':
     parser.add_argument('--model', type=str, help='LLaMA model', default="meta-llama/Llama-3.2-1B")
     parser.add_argument("--layer_name", type=str, default="self_attn.q_proj")
     parser.add_argument("--block_index", type=int, default=0)
-    parser.add_argument("--t", type=int, default=25)
-    parser.add_argument("--b", type=int, default=4)
+    parser.add_argument("--t", type=int, default=5)
+    parser.add_argument("--b", type=int, default=30)
     parser.add_argument("--model_input_bs", type=int, default=1)
     parser.add_argument("--seqlen", type=int, default=2048)
     parser.add_argument("--seed", type=int, default=0)
@@ -99,6 +99,6 @@ if __name__ == '__main__':
 
     # Computation time = 29338.510749154957 sec
 
-    out_path_prefix = "data/hessian_" + args.layer_name + "_block" + str(args.block_index) + "_t" + str(args.t) + "_b" + str(args.b) + "_seed" + str(args.seed)
+    out_path_prefix = "data/" + args.model + "/hessian_" + args.layer_name + "_block" + str(args.block_index) + "_t" + str(args.t) + "_b" + str(args.b) + "_seed" + str(args.seed)
     plot_heatmap(torch.abs(hess), out_path_prefix + '.pdf')
     torch.save(hess, out_path_prefix + ".pt")

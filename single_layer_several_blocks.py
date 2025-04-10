@@ -93,12 +93,12 @@ def compute_hessian_single_layer_several_blocks(model_name, layer_name, num_bloc
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, help='LLaMA model', default="facebook/opt-125m")
+    parser.add_argument('--model', type=str, help='LLaMA model', default="meta-llama/Llama-3.2-1B")
     parser.add_argument("--layer_name", type=str, default="self_attn.q_proj")
     parser.add_argument("--t", type=int, default=5)
     parser.add_argument("--num_blocks", type=int, default=3)
     parser.add_argument("--b", type=int, default=30)
-    parser.add_argument("--model_input_bs", type=int, default=2)
+    parser.add_argument("--model_input_bs", type=int, default=1)
     parser.add_argument("--seqlen", type=int, default=2048)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--cache_dir", default="llm_weights", type=str)
@@ -116,7 +116,7 @@ if __name__ == '__main__':
 
     # Computation time = 71551.41185522405 sec
 
-    out_path_prefix = "data/hessian_" + args.layer_name + "_" + str(args.num_blocks) + "_blocks_t" + str(args.t) + "_b" + str(args.b) + "_seed" + str(args.seed)
+    out_path_prefix = "data/" + args.model + "/hessian_" + args.layer_name + "_" + str(args.num_blocks) + "_blocks_t" + str(args.t) + "_b" + str(args.b) + "_seed" + str(args.seed)
     plot_heatmap(torch.abs(hess), out_path_prefix + '.pdf')
     torch.save(hess, out_path_prefix + ".pt")
 

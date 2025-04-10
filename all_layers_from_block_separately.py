@@ -33,6 +33,6 @@ if __name__ == '__main__':
                                                          seed=args.seed, cache_dir=args.cache_dir)
         print("Computation time =", time.perf_counter() - start_t)
 
-        out_path_prefix = "data/llama3-1b/hessian_" + layer_name + "_block" + str(args.block_index) + "_t" + str(args.t) + "_b" + str(args.b) + "_seed" + str(args.seed)
+        out_path_prefix = "data/" + args.model + "/hessian_" + layer_name + "_block" + str(args.block_index) + "_t" + str(args.t) + "_b" + str(args.b) + "_seed" + str(args.seed)
         plot_heatmap(torch.abs(hess), out_path_prefix + '.pdf')
         torch.save(hess, out_path_prefix + ".pt")
