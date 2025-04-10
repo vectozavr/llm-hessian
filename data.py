@@ -27,15 +27,14 @@ def get_wikitext2(nsamples, seed, seqlen, tokenizer):
     return trainloader, testenc
 
 
-def get_cached_wikitext2(tokenizer, seqlen, seed=0, b=128):
-    trainloader = None
-    testloader = None
+def get_cached_wikitext2(tokenizer, seqlen, seed=0, b=140):
+    suffix = "_seqlen" + str(seqlen) + "_b" + str(b) + "_seed" + str(seed) + ".pt"
     try:
-        trainloader = torch.load("data/wikitext2_dataset_train_cache.pt")[:b]
-        testloader = torch.load("data/wikitext2_dataset_test_cache.pt")
+        trainloader = torch.load("data/wikitext2_dataset_train_cache" + suffix)[:b]
+        testloader = torch.load("data/wikitext2_dataset_test_cache" + suffix)
     except:
         trainloader, testloader = get_wikitext2(nsamples=b, seed=seed, seqlen=seqlen, tokenizer=tokenizer)
-        torch.save(trainloader, "data/wikitext2_dataset_train_cache.pt")
-        torch.save(testloader, "data/wikitext2_dataset_test_cache.pt")
+        torch.save(trainloader, "data/wikitext2_dataset_train_cache" + suffix)
+        torch.save(testloader, "data/wikitext2_dataset_test_cache" + suffix)
 
     return trainloader, testloader

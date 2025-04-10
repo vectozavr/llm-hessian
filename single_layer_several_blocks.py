@@ -17,13 +17,13 @@ def compute_hessian_single_layer_several_blocks(model_name, layer_name, num_bloc
     device = torch.device("cuda:0")
 
     # Get the test loader
-    _, testloader = get_cached_wikitext2(tokenizer, model.seqlen, seed=seed)
+    _, testloader = get_cached_wikitext2(tokenizer=tokenizer, seqlen=seqlen, seed=seed)
 
     params = torch.zeros((t * num_blocks), device=device)
     partial_weights = []
     residuals_blocks = []
 
-    samples_in_dataset = testloader.input_ids.numel() // model.seqlen
+    samples_in_dataset = testloader.input_ids.numel() // seqlen
 
     b = max(1, min(b, samples_in_dataset))
     print("Total number of samples =", b)

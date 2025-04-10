@@ -16,14 +16,14 @@ def compute_hessian_diag_hutchinson(model_name, layer_name, block_index, model_i
     device = torch.device("cuda:0")
 
     # Get the test loader
-    _, testloader = get_cached_wikitext2(tokenizer, model.seqlen, seed=seed)
+    _, testloader = get_cached_wikitext2(tokenizer=tokenizer, seqlen=seqlen, seed=seed)
 
     block = get_all_blocks(model)[block_index]
     layer = get_nested_attr(block, layer_name)
 
     params = layer.weight.clone().requires_grad_(True)
 
-    samples_in_dataset = testloader.input_ids.numel() // model.seqlen
+    samples_in_dataset = testloader.input_ids.numel() // seqlen
 
     b = max(1, min(b, samples_in_dataset))
     print("Total number of samples =", b)

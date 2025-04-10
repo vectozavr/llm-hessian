@@ -18,7 +18,7 @@ def compute_hessian_single_layer_single_block(model_name, layer_name, block_inde
     device = torch.device("cuda:0")
 
     # Get the test loader
-    _, testloader = get_cached_wikitext2(tokenizer, model.seqlen, seed=seed)
+    _, testloader = get_cached_wikitext2(tokenizer=tokenizer, seqlen=seqlen, seed=seed)
 
     # Access the first transformer layer and q_proj weight matrix
     block = get_all_blocks(model)[block_index]
@@ -29,7 +29,7 @@ def compute_hessian_single_layer_single_block(model_name, layer_name, block_inde
     residuals = weight_matrix[0][t:].clone()
     partial_weights = weight_matrix[1:]
 
-    samples_in_dataset = testloader.input_ids.numel() // model.seqlen
+    samples_in_dataset = testloader.input_ids.numel() // seqlen
 
     b = max(1, min(b, samples_in_dataset))
     print("Total number of samples =", b)
