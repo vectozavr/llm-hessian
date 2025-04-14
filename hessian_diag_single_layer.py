@@ -69,7 +69,6 @@ def compute_hessian_diag_hutchinson(model_name, layer_name, block_index, model_i
 
     # NOTICE: here we rely on the additive property of the PPL function (Corollary 7.2 in a technical report)
     hess_diag = torch.zeros_like(params, device=params.device)
-
     draw_progress_bar(0, num_batches)
     for k in range(num_batches):
         ppl_fn = get_partial_ppl_fn(i_start=k * model_input_bs)
@@ -137,9 +136,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, help='LLaMA model', default="meta-llama/Llama-3.2-1B")
     parser.add_argument("--layer_name", type=str, default="self_attn.q_proj")
-    parser.add_argument("--vhp_samples", type=int, default=10)
+    parser.add_argument("--vhp_samples", type=int, default=50)
     parser.add_argument("--block_index", type=int, default=0)
-    parser.add_argument("--b", type=int, default=30)
+    parser.add_argument("--b", type=int, default=10)
     parser.add_argument("--model_input_bs", type=int, default=1)
     parser.add_argument("--seqlen", type=int, default=2048)
     parser.add_argument("--seed", type=int, default=0)

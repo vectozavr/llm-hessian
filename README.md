@@ -19,14 +19,11 @@ This repository provides an accurate and efficient implementation for computing 
 ## 📚 Citation
 If you find our work helpful, please cite us:
 ```bibtex
-@misc{ilin2025hessian,
-      title={Hessian of Perplexity for Large Language Models by PyTorch autograd (Open Source)},
-      author={Ivan Ilin},
-      year={2025},
-      eprint={2504.04520},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2504.04520},
+@article{ilin2025hessian,
+  title={Hessian of Perplexity for Large Language Models by PyTorch autograd (Open Source)},
+  author={Ilin, Ivan},
+  journal={arXiv preprint arXiv:2504.04520},
+  year={2025}
 }
 ```
 
@@ -174,6 +171,13 @@ python hessian_diag_single_layer.py \
     --seed 0 \
     --cache_dir llm_weights
 ```
+
+> [!WARNING]  
+> Please try `facebook/opt-125m` for `--model` parameter instead of larger Llama models if your computations are too slow, or you do not have enough GPU memory.
+
+> [!NOTE]  
+> If you want to consider your custom subset of parameters (for example a random subset or $t$ parameters), you need to change the `custom_forward(self, inpt)` method, where you define how the desired subset of parameters should form a full weight metrix.
+
 
 ---
 
