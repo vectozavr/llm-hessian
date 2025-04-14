@@ -2,7 +2,7 @@ import argparse
 import time
 from utils import *
 
-from single_layer_single_block import compute_hessian_single_layer_single_block
+from src.single_layer_single_block import compute_hessian_single_layer_single_block
 
 
 if __name__ == '__main__':

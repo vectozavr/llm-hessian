@@ -122,7 +122,7 @@ pip install -r requirements.txt
 
 ### 🔹 Single Layer from One Block
 ```bash
-python single_layer_single_block.py \
+python src/single_layer_single_block.py \
     --model meta-llama/Llama-3.2-1B \
     --layer_name self_attn.q_proj \
     --block_index 0 \
@@ -135,7 +135,7 @@ python single_layer_single_block.py \
 
 ### 🔹 Single Layer from Several Blocks
 ```bash
-python single_layer_several_blocks.py \
+python src/single_layer_several_blocks.py \
     --model meta-llama/Llama-3.2-1B \
     --layer_name self_attn.q_proj \
     --t 5 \
@@ -148,7 +148,7 @@ python single_layer_several_blocks.py \
 
 ### 🔹 Several Layers from Several Blocks
 ```bash
-python several_layers_several_blocks.py \
+python src/several_layers_several_blocks.py \
     --model meta-llama/Llama-3.2-1B \
     --t 5 \
     --num_layers 3 \
@@ -161,7 +161,7 @@ python several_layers_several_blocks.py \
 
 ### 🔹 Compute only Diagonal Elements (full layer)
 ```bash
-python hessian_diag_single_layer.py \
+python src/hessian_diag_single_layer.py \
     --model meta-llama/Llama-3.2-1B \
     --layer_name self_attn.q_proj \
     --vhp_samples 10 \
