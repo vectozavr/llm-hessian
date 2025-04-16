@@ -6,6 +6,65 @@ import torch.nn.functional as F
 from utils import *
 from data import get_cached_wikitext2
 
+from torch.autograd.functional import _as_tuple, _grad_preprocess, _validate_v, _check_requires_grad, _autograd_grad, \
+    _fill_in_zeros, _grad_postprocess, _tuple_postprocess
+
+
+def sample_vhp_for_hessian_diagonal_estimation(func, inputs, vhp_samples, create_graph=False, strict=False, update_callback=None):
+    with torch.enable_grad():
+        is_inputs_tuple, inputs = _as_tuple(inputs, "inputs", "vhp")
+        inputs = _grad_preprocess(inputs, create_graph=create_graph, need_graph=True)
+
+        outputs = func(*inputs)
+        is_outputs_tuple, outputs = _as_tuple(outputs, "outputs of the user-provided function", "vhp")
+        _check_requires_grad(outputs, "outputs", strict=strict)
+
+        if is_outputs_tuple or not isinstance(outputs[0], torch.Tensor):
+            raise RuntimeError("The function given to vhp should return a single Tensor")
+        if outputs[0].nelement() != 1:
+            raise RuntimeError("The Tensor returned by the function given to vhp should contain a single element")
+
+        # Compute the gradient (jacobian) and retain the computation graph
+        jac = _autograd_grad(outputs, inputs, create_graph=True)
+        _check_requires_grad(jac, "jacobian", strict=strict)
+
+    enable_grad = True if create_graph else torch.is_grad_enabled()
+
+    params = inputs[0]
+    diag_estimate = torch.zeros_like(params)
+
+    with torch.set_grad_enabled(enable_grad):
+        for j in range(vhp_samples):
+            v = hadamard_vector(size=params.numel(), block_size=32).reshape(params.shape)
+            v = v.to(device=params.device)
+
+            _, v = _as_tuple(v, "v", "vhp")
+            v = _grad_preprocess(v, create_graph=create_graph, need_graph=False)
+            _validate_v(v, inputs, is_inputs_tuple)
+
+            # Compute vector-hessian product (vhp) with retain_graph set appropriately
+            retain = j < (vhp_samples - 1)
+            grad_res = torch.autograd.grad(
+                outputs=jac,
+                inputs=inputs,
+                grad_outputs=v,
+                create_graph=create_graph,
+                retain_graph=retain,
+                allow_unused=False
+            )
+
+            vhp = _fill_in_zeros(grad_res, inputs, strict, create_graph, "double_back")
+
+            outputs = _grad_postprocess(outputs, create_graph)
+            vhp = _grad_postprocess(vhp, create_graph)
+
+            diag_estimate += vhp[0] * v[0] / vhp_samples
+
+            if update_callback:
+                update_callback(j)
+
+    return diag_estimate
+
 
 def compute_hessian_diag_hutchinson(model_name, layer_name, block_index, model_input_bs, seqlen, b, vhp_samples, seed, cache_dir):
     set_seed(seed)
@@ -34,26 +93,6 @@ def compute_hessian_diag_hutchinson(model_name, layer_name, block_index, model_i
 
     print("Number of batches =", num_batches)
 
-    def balanced_block_rademacher(size, block_size=8, device="cuda:0"):
-        assert size % block_size == 0, "Size must be a multiple of block_size"
-
-        # Create blocks with equal number of +1 and -1
-        blocks = torch.cat([
-            torch.ones((size // block_size, block_size // 2), device=device),
-            -torch.ones((size // block_size, block_size // 2), device=device)
-        ], dim=1)
-
-        # Shuffle within each block
-        idx = torch.argsort(torch.rand(blocks.shape, device=device), dim=1)
-        blocks = torch.gather(blocks, 1, idx)
-
-        # Reshape to original size
-        return blocks.view(-1)
-
-    def hadamard_vector(size, block_size=8):
-        _v = balanced_block_rademacher(size, block_size)
-        return torch.fft.ifft(torch.fft.fft(_v)).real  # Fast Hadamard-like transform
-
     def get_partial_ppl_fn(i_start):
         def partial_ppl_fn(x):
             # Define custom forward method for q_proj
@@ -73,19 +112,22 @@ def compute_hessian_diag_hutchinson(model_name, layer_name, block_index, model_i
     for k in range(num_batches):
         ppl_fn = get_partial_ppl_fn(i_start=k * model_input_bs)
 
+        '''
         diag_estimate = torch.zeros_like(params)
-
         for j in range(vhp_samples):
             v = hadamard_vector(size=params.numel(), block_size=32).reshape(diag_estimate.shape)
             v = v.to(device=params.device)
 
             _, Hv = torch.autograd.functional.vhp(ppl_fn, (params,), (v,))
-            diag_estimate += Hv[0] * v / num_batches  # Diagonal approximation
+            diag_estimate += Hv[0] * v / vhp_samples  # Diagonal approximation
 
             draw_progress_bar(k*vhp_samples + j + 1, num_batches*vhp_samples)
-
+        '''
+        # We use custom optimized version of vhp where v is sampled inside (up to x2 acceleration):
+        diag_estimate = sample_vhp_for_hessian_diagonal_estimation(ppl_fn, (params,), vhp_samples=vhp_samples,
+                                                                   update_callback=lambda j: draw_progress_bar(k*vhp_samples + j + 1, num_batches*vhp_samples))
         hess_diag = hess_diag.to(device=diag_estimate.device)
-        hess_diag += diag_estimate / vhp_samples
+        hess_diag += diag_estimate / num_batches
 
 
     # NOTICE: This code is written for one single experiment in order to understand how errors evolve over time
@@ -136,9 +178,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, help='LLaMA model', default="meta-llama/Llama-3.2-1B")
     parser.add_argument("--layer_name", type=str, default="self_attn.q_proj")
-    parser.add_argument("--vhp_samples", type=int, default=50)
+    parser.add_argument("--vhp_samples", type=int, default=100)
     parser.add_argument("--block_index", type=int, default=0)
-    parser.add_argument("--b", type=int, default=10)
+    parser.add_argument("--b", type=int, default=1)
     parser.add_argument("--model_input_bs", type=int, default=1)
     parser.add_argument("--seqlen", type=int, default=2048)
     parser.add_argument("--seed", type=int, default=0)

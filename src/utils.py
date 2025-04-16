@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import random
+import os
 
 from torch import nn
 from importlib.metadata import version
@@ -161,6 +162,11 @@ def disable_non_differential_modules():
 
 
 def plot_heatmap(tensor, out_path="heatmap_hessian.pdf"):
+    # Create directory if it doesn't exist
+    out_dir = os.path.dirname(out_path)
+    if out_dir and not os.path.exists(out_dir):
+        os.makedirs(out_dir, exist_ok=True)
+
     vmin, vmax = np.percentile(tensor.cpu().numpy(), [0, 98])
 
     m, n = tensor.shape
@@ -182,6 +188,11 @@ def plot_heatmap(tensor, out_path="heatmap_hessian.pdf"):
 
 
 def plot_hist(tensor, out_path="histogram.pdf"):
+    # Create directory if it doesn't exist
+    out_dir = os.path.dirname(out_path)
+    if out_dir and not os.path.exists(out_dir):
+        os.makedirs(out_dir, exist_ok=True)
+
     # Create a histogram-like bar plot
     plt.bar(torch.arange(len(tensor)), tensor.cpu().numpy())
 
@@ -193,3 +204,25 @@ def plot_hist(tensor, out_path="histogram.pdf"):
 
     # Show plot
     plt.show()
+
+
+def balanced_block_rademacher(size, block_size=8, device="cuda:0"):
+    assert size % block_size == 0, "Size must be a multiple of block_size"
+
+    # Create blocks with equal number of +1 and -1
+    blocks = torch.cat([
+        torch.ones((size // block_size, block_size // 2), device=device),
+        -torch.ones((size // block_size, block_size // 2), device=device)
+    ], dim=1)
+
+    # Shuffle within each block
+    idx = torch.argsort(torch.rand(blocks.shape, device=device), dim=1)
+    blocks = torch.gather(blocks, 1, idx)
+
+    # Reshape to original size
+    return blocks.view(-1)
+
+
+def hadamard_vector(size, block_size=8):
+    _v = balanced_block_rademacher(size, block_size)
+    return torch.fft.ifft(torch.fft.fft(_v)).real  # Fast Hadamard-like transform
